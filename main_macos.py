@@ -10,6 +10,8 @@ import requests
 import json
 import webbrowser
 import platform
+from pathlib import Path
+import textwrap
 
 def resource_path(relative_path):
     if hasattr(sys, '_MEIPASS'):
