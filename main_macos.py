@@ -375,7 +375,7 @@ def show_main_window(uuid):
     lbl_switch_region.pack(pady=5)
     lbl_switch_region.bind("<Button-1>", lambda event: (
         messagebox.showinfo("切换区域", "切换区域后需重启此应用程序"),
-        webbrowser.open(f"https://v.getsteamcard.com/app.html?code={uuid}")
+        webbrowser.open(f"https://cn.xiexievpn.com/app.html?code={uuid}")
     ))
 
     # 进入主窗口时尝试获取配置
