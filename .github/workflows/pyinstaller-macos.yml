@@ -46,11 +46,11 @@ jobs:
       - name: Archive build artifacts
         run: |
           cd dist
-          zip -r 谢谢网络加速器-mac.zip 谢谢网络加速器.app
+          zip -r XieXieVPN-mac.zip 谢谢网络加速器.app
           cd ..
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: 谢谢网络加速器-mac
-          path: dist/谢谢网络加速器-mac.zip
+          name: XieXieVPN-mac
+          path: dist/XieXieVPN-mac.zip
