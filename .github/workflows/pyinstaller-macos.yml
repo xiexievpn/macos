@@ -1,0 +1,54 @@
+name: Build macOS App with PyInstaller
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Download xray related files
+        run: |
+          curl -L -o mac.zip https://getsteamcard.com/mac.zip
+          unzip mac.zip
+          chmod +x xray
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+
+      - name: Install PyInstaller
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+
+      - name: Build with PyInstaller
+        run: |
+          pyinstaller \
+            --windowed \
+            --name XieXieVPN \
+            --add-data "internet.sh:." \
+            --add-data "close.sh:." \
+            --add-data "xray:." \
+            --add-data "geosite.dat:." \
+            --add-data "geoip.dat:." \
+            main_macos.py
+
+      - name: Archive build artifacts
+        run: |
+          cd dist
+          zip -r XieXieVPN-mac.zip XieXieVPN.app
+          cd ..
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: XieXieVPN-mac
+          path: dist/XieXieVPN-mac.zip
