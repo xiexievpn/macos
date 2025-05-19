@@ -27,7 +27,6 @@ def get_persistent_path(filename):
         os.makedirs(app_support_dir, exist_ok=True)
         return os.path.join(app_support_dir, filename)
     else:
-        # 其它系统自行处理
         return filename
 
 AUTOSTART_FILE = get_persistent_path("autostart_state.txt")
@@ -43,11 +42,9 @@ def load_autostart_state() -> bool:
     return False
 
 def toggle_autostart_mac(should_enable: bool):
-    # 用户目录下的 LaunchAgents 路径
     launch_agents_dir = Path.home() / "Library" / "LaunchAgents"
     launch_agents_dir.mkdir(parents=True, exist_ok=True)
 
-    # plist 文件名和完整路径
     plist_name = "com.xiexievpn.launcher.plist"
     plist_path = launch_agents_dir / plist_name
 
@@ -76,13 +73,11 @@ def toggle_autostart_mac(should_enable: bool):
             </plist>
         """)
 
-        # 写入 plist 文件
         with open(plist_path, "w", encoding="utf-8") as f:
             f.write(plist_content)
 
         # load plist 到 launchctl
         try:
-            # 先 unload 一下，避免已经存在时出错
             subprocess.run(["launchctl", "unload", str(plist_path)], check=False)
             subprocess.run(["launchctl", "load", str(plist_path)], check=True)
             print("已启用开机自启并加载 Launch Agent。")
@@ -138,7 +133,7 @@ def on_closing():
     close_state = btn_close_proxy["state"]
     general_state = btn_general_proxy["state"]
     if close_state == "normal":
-        if general_state == "disabled":  # 说明此时加速是开的
+        if general_state == "disabled":
             try:
                 subprocess.run(["/bin/bash", resource_path("close.sh")], check=True)
                 messagebox.showinfo("Information", "加速已暂时关闭")
@@ -310,8 +305,8 @@ def parse_and_write_config(url_string):
                 }
             ]
         }
-
-        with open(resource_path("config.json"), "w", encoding="utf-8") as config_file:
+        config_path = get_persistent_path("config.json")
+        with open(config_path, "w", encoding="utf-8") as config_file:
             json.dump(config_data, config_file, indent=4)
 
     except Exception as e:
@@ -350,7 +345,6 @@ def show_main_window(uuid):
     window.title("谢谢网络加速器")
     window.geometry("300x250")
 
-    # macOS 上图标可以使用 .icns，或者干脆省略
     try:
         window.iconbitmap(resource_path("favicon.icns"))
     except Exception:
@@ -370,7 +364,6 @@ def show_main_window(uuid):
     chk_autostart_button = tk.Checkbutton(window, text="开机自启动（示例）", variable=chk_autostart)
     chk_autostart_button.pack(pady=10)
 
-    # 切换区域超链接
     lbl_switch_region = tk.Label(window, text="切换区域", fg="blue", cursor="hand2")
     lbl_switch_region.pack(pady=5)
     lbl_switch_region.bind("<Button-1>", lambda event: (
@@ -382,7 +375,6 @@ def show_main_window(uuid):
     fetch_config_data(uuid)
 
     window.deiconify()
-    # 让窗口置顶一下再取消，类似 Windows 版
     window.attributes('-topmost', True)
     window.attributes('-topmost', False)
 
