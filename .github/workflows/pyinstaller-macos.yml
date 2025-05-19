@@ -33,7 +33,9 @@ jobs:
         run: |
           pyinstaller \
             --windowed \
-            --name XieXieVPN \
+            --name "谢谢网络加速器" \
+            --icon "favicon.icns" \
+            --add-data "favicon.icns:." \
             --add-data "internet.sh:." \
             --add-data "close.sh:." \
             --add-data "xray:." \
