@@ -8,10 +8,15 @@
 pip install pyinstaller
 pyinstaller \
   --windowed \
-  --name XieXieVPN \
+  --name "谢谢网络加速器" \
+  --icon "favicon.icns" \
   --add-data "internet.sh:." \
   --add-data "close.sh:." \
+  --add-data "favicon.icns:." \
+  --add-data "geosite.dat:." \
+  --add-data "geoip.dat:." \
+  --add-data "xray:." \
   main_macos.py
 ```
 
-打包完成后，在 `dist/XieXieVPN` 目录下会生成 `XieXieVPN.app`。
+打包完成后，在 `dist/XieXieVPN` 目录下会生成 `谢谢网络加速器.app`。
