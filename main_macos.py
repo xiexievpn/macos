@@ -226,9 +226,32 @@ def parse_and_write_config(url_string):
             "log": {
                 "loglevel": "error"
             },
+            "dns": {
+"servers": [
+{
+"tag": "bootstrap",
+"address": "223.5.5.5",
+"domains": [],
+"expectIPs": ["geoip:cn"],
+"detour": "direct"
+},
+{
+"tag": "remote-doh",
+"address": "https://dns.google/dns-query ",
+"detour": "proxy"
+},
+"localhost"
+],
+"queryStrategy": "UseIPv4"
+},
             "routing": {
                 "domainStrategy": "IPIfNonMatch",
                 "rules": [
+                    {
+"type": "field",
+"inboundTag": ["dns-in"],
+"outboundTag": "proxy"
+},
                     {
                         "type": "field",
                         "domain": ["geosite:category-ads-all"],
@@ -252,6 +275,17 @@ def parse_and_write_config(url_string):
                 ]
             },
             "inbounds": [
+                {
+"tag": "dns-in",
+"listen": "127.0.0.1",
+"port": 53,
+"protocol": "dokodemo-door",
+"settings": {
+"address": "8.8.8.8",
+"port": 53,
+"network": "tcp,udp"
+}
+},
                 {
                     "listen": "127.0.0.1",
                     "port": 10808,
@@ -441,3 +475,4 @@ if saved_uuid:
     check_login()
 
 login_window.mainloop()
+
