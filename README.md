@@ -1,3 +1,6 @@
+谢谢网络加速器 – https://cn.xiexievpn.com
+
+
 在 macOS 下使用的客户端。
 
 ## 打包方法
