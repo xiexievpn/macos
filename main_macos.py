@@ -12,6 +12,7 @@ import webbrowser
 import platform
 from pathlib import Path
 import textwrap
+import urllib.parse
 
 def resource_path(relative_path):
     if hasattr(sys, '_MEIPASS'):
@@ -219,39 +220,64 @@ def parse_and_write_config(url_string):
             messagebox.showerror("Error", "服务器返回的数据不符合预期格式（不是 vless:// 开头）")
             return
 
+        # 解析基础信息
         uuid = url_string.split("@")[0].split("://")[1]
         domain = url_string.split("@")[1].split(":")[0].split(".")[0]
+
+        # 解析URL参数
+        try:
+            # 分离查询参数部分
+            query_part = url_string.split("?")[1].split("#")[0]
+            params = urllib.parse.parse_qs(query_part)
+            
+            # 提取参数
+            public_key = params.get('pbk', [''])[0] 
+            short_id = params.get('sid', [''])[0]    
+            sni = params.get('sni', [f"{domain}.rocketchats.xyz"])[0].replace("www.", "")
+            
+            if not public_key:
+                public_key = "mUzqKeHBc-s1m03iD8Dh1JoL2B9JwG5mMbimEoJ523o" 
+            
+            if not short_id:
+                short_id = "" 
+                
+        except (IndexError, KeyError, ValueError) as e:
+            print(f"解析URL参数时出错，使用默认值: {e}")
+            # 如果解析失败，使用默认值
+            public_key = "mUzqKeHBc-s1m03iD8Dh1JoL2B9JwG5mMbimEoJ523o"
+            short_id = ""
+            sni = f"{domain}.rocketchats.xyz"
 
         config_data = {
             "log": {
                 "loglevel": "error"
             },
             "dns": {
-"servers": [
-{
-"tag": "bootstrap",
-"address": "223.5.5.5",
-"domains": [],
-"expectIPs": ["geoip:cn"],
-"detour": "direct"
-},
-{
-"tag": "remote-doh",
-"address": "https://dns.google/dns-query ",
-"detour": "proxy"
-},
-"localhost"
-],
-"queryStrategy": "UseIPv4"
-},
+                "servers": [
+                    {
+                        "tag": "bootstrap",
+                        "address": "223.5.5.5",
+                        "domains": [],
+                        "expectIPs": ["geoip:cn"],
+                        "detour": "direct"
+                    },
+                    {
+                        "tag": "remote-doh",
+                        "address": "https://dns.google/dns-query ",
+                        "detour": "proxy"
+                    },
+                    "localhost"
+                ],
+                "queryStrategy": "UseIPv4"
+            },
             "routing": {
                 "domainStrategy": "IPIfNonMatch",
                 "rules": [
                     {
-"type": "field",
-"inboundTag": ["dns-in"],
-"outboundTag": "proxy"
-},
+                        "type": "field",
+                        "inboundTag": ["dns-in"],
+                        "outboundTag": "proxy"
+                    },
                     {
                         "type": "field",
                         "domain": ["geosite:category-ads-all"],
@@ -276,16 +302,16 @@ def parse_and_write_config(url_string):
             },
             "inbounds": [
                 {
-"tag": "dns-in",
-"listen": "127.0.0.1",
-"port": 53,
-"protocol": "dokodemo-door",
-"settings": {
-"address": "8.8.8.8",
-"port": 53,
-"network": "tcp,udp"
-}
-},
+                    "tag": "dns-in",
+                    "listen": "127.0.0.1",
+                    "port": 53,
+                    "protocol": "dokodemo-door",
+                    "settings": {
+                        "address": "8.8.8.8",
+                        "port": 53,
+                        "network": "tcp,udp"
+                    }
+                },
                 {
                     "listen": "127.0.0.1",
                     "port": 10808,
@@ -321,9 +347,9 @@ def parse_and_write_config(url_string):
                         "realitySettings": {
                             "show": False,
                             "fingerprint": "chrome",
-                            "serverName": f"{domain}.rocketchats.xyz",
-                            "publicKey": "mUzqKeHBc-s1m03iD8Dh1JoL2B9JwG5mMbimEoJ523o",
-                            "shortId": "",
+                            "serverName": sni, 
+                            "publicKey": public_key, 
+                            "shortId": short_id,
                             "spiderX": ""
                         }
                     },
@@ -339,9 +365,12 @@ def parse_and_write_config(url_string):
                 }
             ]
         }
+        
         config_path = get_persistent_path("config.json")
         with open(config_path, "w", encoding="utf-8") as config_file:
             json.dump(config_data, config_file, indent=4)
+
+        print(f"配置已更新: publicKey={public_key[:20]}..., shortId={short_id}, serverName={sni}")
 
     except Exception as e:
         print(f"提取配置信息时发生错误: {e}")
@@ -475,4 +504,5 @@ if saved_uuid:
     check_login()
 
 login_window.mainloop()
+
 
