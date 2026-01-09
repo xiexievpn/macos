@@ -42,6 +42,21 @@ def load_autostart_state() -> bool:
             return f.read().strip() == "1"
     return False
 
+def grant_permission(path):
+    if os.path.exists(path):
+        os.chmod(path, 0o755)
+
+# 2. 新增：使用 AppleScript 提权运行 Shell 脚本
+def run_admin_script(script_name):
+    script_full_path = resource_path(script_name)
+    # 这一句是核心：调用 osascript 弹出密码框并以管理员权限执行 bash 脚本
+    cmd = f'''do shell script "/bin/bash \\"{script_full_path}\\"" with administrator privileges'''
+    try:
+        subprocess.run(["osascript", "-e", cmd], check=True)
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
 def toggle_autostart_mac(should_enable: bool):
     launch_agents_dir = Path.home() / "Library" / "LaunchAgents"
     launch_agents_dir.mkdir(parents=True, exist_ok=True)
@@ -107,28 +122,34 @@ proxy_state = 0
 
 def set_general_proxy():
     global proxy_state
-    try:
-        # 先执行 close.sh 以确保先杀掉先前可能残留的 xray 进程
-        subprocess.run(["/bin/bash", resource_path("close.sh")], check=True)
-        # 再执行 internet.sh 启动 xray 并设置代理
-        subprocess.run(["/bin/bash", resource_path("internet.sh")], check=True)
+    
+    # 确保关键文件有执行权限
+    grant_permission(resource_path("xray"))
+    grant_permission(resource_path("internet.sh"))
+    grant_permission(resource_path("close.sh"))
+
+    # 调用 close.sh 清理旧进程 (建议也用提权模式，或者在 internet.sh 里统一处理)
+    # run_admin_script("close.sh") 
+    
+    # 启动加速
+    if run_admin_script("internet.sh"):
         messagebox.showinfo("Information", "加速设置成功")
         btn_general_proxy.config(state="disabled")
         btn_close_proxy.config(state="normal")
         proxy_state = 1
-    except subprocess.CalledProcessError as e:
-        messagebox.showerror("Error", f"Failed to set general proxy: {e}")
-
+    else:
+        # 用户点击了取消或输错了密码
+        messagebox.showerror("Error", "开启失败：用户取消或权限不足")
+        
 def close_proxy():
     global proxy_state
-    try:
-        subprocess.run(["/bin/bash", resource_path("close.sh")], check=True)
+    if run_admin_script("close.sh"):
         messagebox.showinfo("Information", "加速已关闭")
         btn_close_proxy.config(state="disabled")
         btn_general_proxy.config(state="normal")
         proxy_state = 0
-    except subprocess.CalledProcessError as e:
-        messagebox.showerror("Error", f"Failed to close proxy: {e}")
+    else:
+        messagebox.showerror("Error", "关闭失败")
 
 def on_closing():
     close_state = btn_close_proxy["state"]
@@ -504,5 +525,6 @@ if saved_uuid:
     check_login()
 
 login_window.mainloop()
+
 
 
