@@ -16,7 +16,7 @@ jobs:
       - name: Download xray related files
         run: |
           curl -L -o mac.zip https://getsteamcard.com/mac.zip
-          unzip mac.zip
+          unzip -o mac.zip
           chmod +x xray
 
       - name: Set up Python
