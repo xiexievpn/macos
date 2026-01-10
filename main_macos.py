@@ -378,7 +378,7 @@ def parse_and_write_config(url_string):
                 "servers": [
                     {"tag": "bootstrap", "address": "223.5.5.5", "domains": [], "expectIPs": ["geoip:cn"], "detour": "direct"},
                     # --- 重要修复: 原代码此处末尾有空格 ---
-                    {"tag": "remote-doh", "address": "https://dns.google/dns-query", "detour": "proxy"},
+                    {"tag": "remote-doh", "address": "https://1.1.1.1/dns-query", "detour": "proxy"},
                     "localhost"
                 ],
                 "queryStrategy": "UseIPv4"
@@ -390,7 +390,7 @@ def parse_and_write_config(url_string):
                     {"type": "field", "domain": ["geosite:category-ads-all"], "outboundTag": "block"},
                     {"type": "field", "protocol": ["bittorrent"], "outboundTag": "direct"},
                     {"type": "field", "domain": ["geosite:geolocation-!cn"], "outboundTag": "proxy"},
-                    {"type": "field", "ip": ["geoip:cn", "geoip:private"], "outboundTag": "proxy"}
+                    {"type": "field", "ip": ["geoip:cn", "geoip:private"], "outboundTag": "direct"}
                 ]
             },
             "inbounds": [
@@ -518,3 +518,4 @@ if saved_uuid:
     check_login()
 
 login_window.mainloop()
+
