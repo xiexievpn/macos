@@ -1,35 +1,4 @@
-name: Build macOS App with PyInstaller
-
-on:
-  push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
-    
-jobs:
-  build-macos:
-    runs-on: macos-latest
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v3
-
-      - name: Download xray related files
-        run: |
-          curl -L -o mac.zip https://github.com/XTLS/Xray-core/releases/download/v25.3.6/Xray-macos-64.zip
-          unzip -o mac.zip
-          chmod +x xray
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.9"
-
-      - name: Install PyInstaller
-        run: |
-          python -m pip install --upgrade pip
-          pip install pyinstaller
-
-      - name: Build with PyInstaller
+- name: Build with PyInstaller
         run: |
           pyinstaller \
             --windowed \
@@ -41,16 +10,5 @@ jobs:
             --add-data "xray:." \
             --add-data "geosite.dat:." \
             --add-data "geoip.dat:." \
+            --add-data "languages.json:." \  <-- 确保这一行存在
             main_macos.py
-
-      - name: Archive build artifacts
-        run: |
-          cd dist
-          zip -r XieXieVPN-mac.zip 谢谢网络加速器.app
-          cd ..
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: XieXieVPN-mac
-          path: dist/XieXieVPN-mac.zip
