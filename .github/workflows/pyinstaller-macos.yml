@@ -15,7 +15,7 @@ jobs:
 
       - name: Download xray related files
         run: |
-          curl -L -o mac.zip https://getsteamcard.com/mac.zip
+          curl -L -o mac.zip https://github.com/XTLS/Xray-core/releases/download/v25.3.6/Xray-macos-64.zip
           unzip -o mac.zip
           chmod +x xray
 
