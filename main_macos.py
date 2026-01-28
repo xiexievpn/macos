@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
 import tkinter as tk
 from tkinter import messagebox, Menu, ttk
 import subprocess
@@ -85,7 +83,6 @@ def load_autostart_state() -> bool:
             return f.read().strip() == "1"
     return False
 
-# ----------------- 自动更新模块 (macOS专用) -----------------
 def compare_versions(version1, version2):
     try:
         v1_parts = [int(x) for x in version1.split('.')]
@@ -114,10 +111,10 @@ def download_file(url, local_path):
 def perform_macos_update(download_url):
     current_exe = sys.executable
     current_app_path = None
-    
+
     if ".app/" in current_exe:
         current_app_path = current_exe.split(".app/")[0] + ".app"
-    
+
     if not current_app_path:
         messagebox.showerror("Error", "Cannot detect App path. Please download manually.")
         return
@@ -132,31 +129,31 @@ def perform_macos_update(download_url):
 
     temp_dir = tempfile.mkdtemp()
     zip_path = os.path.join(temp_dir, "update.zip")
-    
+
     if not download_file(download_url, zip_path):
         dl_win.destroy()
         messagebox.showerror("Error", get_message("download_failed"))
         return
-        
+
     dl_win.destroy()
 
     try:
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extractall(temp_dir)
-            
+
         # 寻找新 .app
         new_app_name = None
         for item in os.listdir(temp_dir):
             if item.endswith(".app"):
                 new_app_name = item
                 break
-        
+
         if not new_app_name:
             raise Exception("No .app found in update package")
 
         new_app_full_path = os.path.join(temp_dir, new_app_name)
         app_parent_dir = os.path.dirname(current_app_path)
-        
+
         # 生成更新脚本
         update_script = os.path.join(temp_dir, "update.sh")
         script_content = textwrap.dedent(f"""\
@@ -168,7 +165,7 @@ def perform_macos_update(download_url):
             open "{os.path.join(app_parent_dir, new_app_name)}"
             rm -rf "{temp_dir}"
         """)
-        
+
         with open(update_script, "w") as f:
             f.write(script_content)
         os.chmod(update_script, 0o755)
@@ -191,7 +188,7 @@ def check_for_updates():
             if compare_versions(CURRENT_VERSION, latest) < 0:
                 is_force = compare_versions(CURRENT_VERSION, min_ver) < 0
                 msg = f"{get_message('optional_update_msg')}\n{get_message('version_label')}: {latest}"
-                
+
                 if is_force:
                     messagebox.showinfo(get_message("update_required"), get_message("force_update_msg"))
                     perform_macos_update(download_url)
@@ -270,7 +267,7 @@ def set_general_proxy():
         proxy_state = 1
     else:
         messagebox.showerror("Error", "Permission Denied")
-        
+
 def close_proxy():
     global proxy_state
     if run_admin_script("close.sh"):
@@ -403,7 +400,7 @@ def parse_and_write_config(url_string):
                     "protocol": "vless",
                     "settings": {
                         "vnext": [{
-                            "address": f"{domain}.rocketchats.xyz", "port": 443, 
+                            "address": sni, "port": 443, 
                             "users": [{"id": uuid, "encryption": "none", "flow": "xtls-rprx-vision"}]
                         }]
                     },
@@ -420,13 +417,14 @@ def parse_and_write_config(url_string):
                 {"protocol": "blackhole", "tag": "block"}
             ]
         }
-        
+
         with open(get_persistent_path("config.json"), "w", encoding="utf-8") as f:
             json.dump(config_data, f, indent=4)
 
     except Exception as e:
         messagebox.showerror("Error", f"Config Error: {e}")
 
+# ----------------- 自动更新模块 (macOS专用) -----------------
 def fetch_config_data(uuid):
     try:
         response = requests.post(
@@ -473,7 +471,7 @@ def show_main_window(uuid):
     ))
 
     fetch_config_data(uuid)
-    
+
     # 异步检查更新
     threading.Thread(target=check_for_updates, daemon=True).start()
 
@@ -518,4 +516,3 @@ if saved_uuid:
     check_login()
 
 login_window.mainloop()
-
