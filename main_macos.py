@@ -18,7 +18,7 @@ import shutil
 import locale
 
 # 当前版本号
-CURRENT_VERSION = "1.0.7" 
+CURRENT_VERSION = "1.0.8" 
 
 def resource_path(relative_path):
     if hasattr(sys, '_MEIPASS'):
@@ -177,13 +177,13 @@ def perform_macos_update(download_url):
 
 def check_for_updates():
     try:
-        response = requests.get("https://xiexievpn.com/cn/mac/version.json", timeout=5)
+        response = requests.get("https://xiexievpn.com/cn/macos/version.json", timeout=5)
         if response.status_code == 200:
             info = response.json()
             latest = info.get("version", "0.0.0")
             min_ver = info.get("minVersion", "0.0.0")
             # 假设 JSON 中 mac 下载链接字段为 mac_url，如果没有则尝试默认
-            download_url = info.get("mac_url", "https://xiexievpn.com/mac/XieXieVPN-mac.zip")
+            download_url = info.get("mac_url", "https://xiexievpn.com/macos/XieXieVPN-mac.zip")
 
             if compare_versions(CURRENT_VERSION, latest) < 0:
                 is_force = compare_versions(CURRENT_VERSION, min_ver) < 0
