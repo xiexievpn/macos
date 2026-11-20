@@ -1,0 +1,77 @@
+name: Build macOS App with PyInstaller
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+    branches: ["main", "master"]
+  workflow_dispatch:
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Download sing-box (Universal darwin binary) and rule-sets
+        run: |
+          SB_VERSION="1.10.7"
+          curl -L -o sb-amd64.tar.gz "https://github.com/SagerNet/sing-box/releases/download/v${SB_VERSION}/sing-box-${SB_VERSION}-darwin-amd64.tar.gz"
+          curl -L -o sb-arm64.tar.gz "https://github.com/SagerNet/sing-box/releases/download/v${SB_VERSION}/sing-box-${SB_VERSION}-darwin-arm64.tar.gz"
+          tar -xzf sb-amd64.tar.gz
+          tar -xzf sb-arm64.tar.gz
+          lipo -create \
+            "sing-box-${SB_VERSION}-darwin-amd64/sing-box" \
+            "sing-box-${SB_VERSION}-darwin-arm64/sing-box" \
+            -output sing-box
+          chmod +x sing-box
+          rm -rf sb-amd64.tar.gz sb-arm64.tar.gz "sing-box-${SB_VERSION}-darwin-amd64" "sing-box-${SB_VERSION}-darwin-arm64"
+
+          curl -L -o geoip-cn.srs "https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/geoip-cn.srs"
+          curl -L -o geosite-cn.srs "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-cn.srs"
+          ls -lh sing-box geoip-cn.srs geosite-cn.srs
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller requests pillow
+
+      - name: Build macOS App with PyInstaller
+        run: |
+          chmod +x internet.sh close.sh repair_on_login.sh sing-box
+          pyinstaller \
+            --noconfirm \
+            --clean \
+            --windowed \
+            --name "谢谢网络加速器" \
+            --icon "favicon.icns" \
+            --add-data "favicon.icns:." \
+            --add-data "favicon.ico:." \
+            --add-data "internet.sh:." \
+            --add-data "close.sh:." \
+            --add-data "repair_on_login.sh:." \
+            --add-data "sing-box:." \
+            --add-data "geoip-cn.srs:." \
+            --add-data "geosite-cn.srs:." \
+            --add-data "languages.json:." \
+            --add-data "flags:flags" \
+            main_macos.py
+
+      - name: Ad-hoc sign and archive macOS App
+        run: |
+          codesign --force --deep --sign - "dist/谢谢网络加速器.app"
+          ditto -c -k --sequesterRsrc --keepParent "dist/谢谢网络加速器.app" "dist/XieXieVPN-mac.zip"
+          ls -lh "dist/XieXieVPN-mac.zip"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: XieXieVPN-mac
+          path: dist/XieXieVPN-mac.zip
+          retention-days: 30
